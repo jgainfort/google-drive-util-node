@@ -25,7 +25,7 @@ function readLinesSync(msgs, callback)
     {
         msgs[i] = readLineSync(msgs[i]);
     }
-    
+
     callback(msgs);
 }
 
@@ -37,7 +37,7 @@ function askAccessToken(settings, oauth, callback) {
         });
 
     console.log('Visit the url: ', url);
-    
+
     var code = readLineSync('Enter the code here:');
     // request access token
     oauth.getToken(code, callback);
@@ -45,9 +45,9 @@ function askAccessToken(settings, oauth, callback) {
 
 function saveAccessToken(callback) {
     var oauthSettings = JSON.parse(fs.readFileSync(OAUTH_SETTING_FILE, 'utf8'));
-    
+
     var oauth = createOAuth2Client(oauthSettings);
-    
+
     askAccessToken( oauthSettings,
                     oauth,
                     function(err, tokens) {
@@ -66,25 +66,25 @@ function readToken(callback)
 {
     var oauthSettings = JSON.parse(fs.readFileSync(OAUTH_SETTING_FILE, 'utf8'));
     var token = fs.readFileSync(OAUTH_FILE, 'utf8');
-    
+
     var oauth = createOAuth2Client(oauthSettings);
     oauth.setCredentials(JSON.parse(token));
-    
+
     callback(oauth);
 }
 
 function readTokenSync()
 {
     var oauth;
-    
+
     readToken(function(_oauth) {
         oauth = _oauth;
     });
-    
+
     while (oauth === undefined) {
         desync.runLoopOnce();
     }
-    
+
     return oauth;
 }
 
@@ -97,7 +97,7 @@ function getFolderInfo(oauth, folderId, path, callback)
 {
     var args = {    auth: oauth,
                     folderId: folderId};
-    
+
     drive.children.list(    args,
                             function(err, res) {
                                 if (err) {
@@ -118,7 +118,7 @@ function getFileInfo(oauth, fileId, path, callback)
 {
     var args = {    auth: oauth,
                     fileId: fileId};
-    
+
     drive.files.get(    args,
                         function(err, res) {
                             if (err) {
@@ -152,6 +152,17 @@ function createFolder(oauth, folderId, name, callback)
                         });
 }
 
+function downloadFile(oauth, fileId, callback) {
+    var args = {
+        auth: oauth,
+        fileId: fileId,
+    }
+
+    drive.files.get(args, function(err, res) {
+       _defaultCallback(err, res, callback);
+    });
+}
+
 function renameFile(oauth, fileId, name, callback)
 {
     var args = {    auth: oauth,
@@ -167,10 +178,10 @@ function duplicateFile(oauth, fileId, callback)
 {
     var args = {    auth: oauth,
                     fileId: fileId};
-    
+
     drive.files.copy(   args,
                         function(err, res) {
-                            _defaultCallback(err, res, callback);  
+                            _defaultCallback(err, res, callback);
                         });
 }
 
@@ -179,7 +190,7 @@ function moveFile(oauth, fileId, folderId, callback)
     var args = {    auth: oauth,
                     fileId: fileId,
                     resource: { "parents" : [{"id": folderId}]}};
-    
+
     drive.files.update( args,
                         function(err, res) {
                             _defaultCallback(err, res, callback);
@@ -237,7 +248,7 @@ function searchFilesByTitle(oauth, keyword, max_results, callback)
     {
         args["maxResults"] = max_results;
     }
-    
+
     drive.files.list( args,
                     function(err, res) {
                         _defaultCallback(err, res, callback);
@@ -261,3 +272,4 @@ module.exports.duplicateFile = duplicateFile;
 module.exports.moveFile = moveFile;
 module.exports.copyFile = copyFile;
 module.exports.copyFolder = copyFolder;
+module.exports.downloadFile = downloadFile;
